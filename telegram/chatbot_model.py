@@ -6,10 +6,12 @@ from keras.layers import LSTM,Dense,Input,Bidirectional
 from nltk.tokenize.treebank import TreebankWordTokenizer
 from scipy import spatial
 import pickle
+from nltk.corpus import stopwords
+import nltk
 
 
 def prepare(sentence):
-
+    
     MAX_SEQ = 20
     tokenizer = TreebankWordTokenizer()
     sent = tokenizer.tokenize(sentence)
@@ -29,16 +31,25 @@ def prepare(sentence):
 
 #recognize entity
 def return_entity(sent , entity):
+    global stop_words
     sent = sent.lower()
+    tokenizer = TreebankWordTokenizer()
+    sent = tokenizer.tokenize(sent)
     ma = 0
     ans = ""
-    for i in sent.split():
+    pos_tagged = nltk.pos_tag(sent)
+    j = 0
+    for i in sent:
         if i in embeddings_index:
-            if sim(embeddings_index[i] , entity) > ma:
+            if i not in stop_words and pos_tagged[j][1][0:2] != "VB" and sim(embeddings_index[i] , entity) > ma:
                 ma = sim(embeddings_index[i] , entity)
                 ans = i
-        if ma < .1:
-            return "nothing"
+        else : print("not in embedding {}".format(i))
+        j+=1
+                
+
+    if ma < .25 :
+        return "nothing"
     return ans
 
 def classify(sent):
@@ -53,7 +64,7 @@ def classify(sent):
         time = return_entity(sent, entity_time)
         if time != 'nothing' and nationality != 'nothing':
             sentt='you asked me too book you a {} restaurant for {}'.format(nationality, time)
-        elif time == 'nothing':
+        elif time == 'nothing' and nationality != 'nothing':
             sentt='when do you want to go there?'
         else:
             sentt='what kind of restaurant do you want?'
@@ -61,12 +72,15 @@ def classify(sent):
         #sentt='GetWeather'
         city = return_entity(sent, entity_city_iran)
         time = return_entity(sent, entity_time)
+        print(city)
+        print(time)
         if time != 'nothing' and city != 'nothing':
             sentt='you requested {}\'s weather for {} ?'.format(city, time)
-        elif time == 'nothing':
+        elif time == 'nothing' and city != 'nothing':
             sentt='you requested {}\'s weather?'.format(city)
         else:
             sentt='which city\'s weather do you want to know ?'
+        #print(sim(embeddings_index['karaj'], entity_city_iran))
     elif argmax == 3:
         sentt='PlayMusic'
     elif argmax == 4:
@@ -89,18 +103,21 @@ def initalize():
 
     global dekhtemodel
     global embeddings_index
+    global stop_words
 
-
+    stop_words = set(stopwords.words('english'))
+    stop_words.add('?')
+    stop_words.remove('now')
     with open("embedding_dict", 'rb') as fp:
         embeddings_index = pickle.load(fp)
-
+    
 
     embeddings_size = 300
     entity_lists = {"cloth": ['t-shirt', 'shirts', 'jeans'],
                     "city_iran": ['karaj', 'tehran', 'mashhad'],
                     "name_foreign": ['john', 'jack', 'paul'],
                     "music_genre": ['pop', 'rap', 'jazz', 'rock', 'classical'],
-                    "time": ['tommorow', 'today', 'yesterday', 'friday', 'saturdays', 'sunday'],
+                    "time": ['tommorow', 'today', 'yesterday', 'friday', 'saturdays', 'sunday', 'now'],
                     "adverb": ['sometimes', 'usually', 'never'],
                     "nationality": ['chinese', 'persian', 'french']
                     }
@@ -126,3 +143,6 @@ def initalize():
 
     # load previous weights
     dekhtemodel.load_weights('weight_dekhte.12.hdf5')
+
+#   print(sim(embeddings_index['now'],entity_time))
+
