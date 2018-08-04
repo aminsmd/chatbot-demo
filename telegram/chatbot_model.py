@@ -47,9 +47,25 @@ def classify(sent):
     if argmax == 0:
         sentt='AddToPlaylist'
     elif argmax == 1:
-        sentt='BookRestaurant'
+        #sentt='BookRestaurant'
+        nationality = return_entity(sent, entity_nationality)
+        time = return_entity(sent, entity_time)
+        if time != 'nothing' and nationality != 'nothing':
+            sentt='you asked me too book you a {} restaurant for {}'.format(nationality, time)
+        elif time == 'nothing':
+            sentt='when do you want to go there?'
+        else:
+            sentt='what kind of restaurant do you want?'
     elif argmax == 2:
-        sentt='GetWeather'
+        #sentt='GetWeather'
+        city = return_entity(sent, entity_city_iran)
+        time = return_entity(sent, entity_time)
+        if time != 'nothing' and city != 'nothing':
+            sentt='you requested {}\'s weather for {} ?'.format(city, time)
+        elif time == 'nothing':
+            sentt='you requested {}\'s weather?'.format(city)
+        else:
+            sentt='which city\'s weather do you want to know ?'
     elif argmax == 3:
         sentt='PlayMusic'
     elif argmax == 4:
@@ -83,8 +99,9 @@ def initalize():
                     "city_iran": ['karaj', 'tehran', 'mashhad'],
                     "name_foreign": ['john', 'jack', 'paul'],
                     "music_genre": ['pop', 'rap', 'jazz', 'rock', 'classical'],
-                    "time": ['tommorow', 'today', 'yesterday', '8pm'],
-                    "adverb": ['sometimes', 'usually', 'never']
+                    "time": ['tommorow', 'today', 'yesterday', 'friday', 'saturdays', 'sunday'],
+                    "adverb": ['sometimes', 'usually', 'never'],
+                    "nationality": ['chinese', 'persian', 'french']
                     }
     for ent in entity_lists:
         sum_of_embedding = np.zeros(embeddings_size)
