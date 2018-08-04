@@ -33,11 +33,12 @@ def return_entity(sent , entity):
     ma = 0
     ans = ""
     for i in sent.split():
-        if sim(embeddings_index[i] , entity) > ma:
-            ma = sim(embeddings_index[i] , entity)
-            ans = i
-    if ma < .1:
-        return "nothing"
+        if i in embeddings_index:
+            if sim(embeddings_index[i] , entity) > ma:
+                ma = sim(embeddings_index[i] , entity)
+                ans = i
+        if ma < .1:
+            return "nothing"
     return ans
 
 def classify(sent):
